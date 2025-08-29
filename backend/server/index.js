@@ -11,7 +11,6 @@ const moment = require("moment");
 const env = require("./utils/env");
 const { rootRouter } = require("./routes/rootRouter");
 const { ipdrRouter } = require("./routes/ipdrRouter");
-const { cdrRouter } = require("./routes/cdrRouter");
 const { noteRouter } = require("./routes/noteRouter");
 const { profileRouter } = require("./routes/profileRouter");
 
@@ -174,7 +173,6 @@ app.post("/ipdr/uploadCSV", async (req, res) => {
 
 // ---- Connect Routers ----
 app.use("/", rootRouter);
-app.use("/cdr", cdrRouter);
 app.use("/ipdr", ipdrRouter);
 app.use("/note", noteRouter);
 app.use("/profile", profileRouter);

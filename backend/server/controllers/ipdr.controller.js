@@ -293,41 +293,64 @@ let addIPDRRecord = async (req, res) => {
 // ========================= GET RECORDS BY TIME + LOCATION =========================
 let getIPDRRecords = async (req, res) => {
     try {
-        let refTime = new Date(req.body.refTime)
-        let duration = req.body.duration
-        let location = req.body.location
-        let radius = req.body.radius ? req.body.radius : 5
+        let { refTime, duration, location, radius } = req.body;
 
-        if (!refTime || !duration || !location) {
+        // Validate inputs
+        if (!refTime || !duration || !location || !location.lat || !location.long) {
             return res.status(400).json({
-                message: "Missing at least one required field: refTime, duration, location",
+                message: "Missing required fields: refTime (date), duration (minutes), location {lat, long}",
                 code: 400
-            })
+            });
         }
 
-        let startTimeReq = new Date(refTime.getTime())
-        let endTimeReq = new Date(refTime.getTime())
-        startTimeReq.setMinutes(refTime.getMinutes() - duration)
-        endTimeReq.setMinutes(refTime.getMinutes() + duration)
+        refTime = new Date(refTime);
+        radius = radius || 5; // default radius = 5 km
 
-        let records = await IPDR.find({ startTime: { $gte: startTimeReq, $lte: endTimeReq } })
+        // Define time window
+        let startTimeReq = new Date(refTime.getTime() - duration * 60000);
+        let endTimeReq = new Date(refTime.getTime() + duration * 60000);
 
-        let refLat = location.lat
-        let refLong = location.long
-        let ans = []
+        // Fetch candidate records
+        let records = await IPDR.find({
+            startTime: { $gte: startTimeReq, $lte: endTimeReq }
+        });
 
+        let ans = [];
         for (let record of records) {
-            let destLat = record.originLatLong.lat
-            let destLong = record.originLatLong.long
-            let distance = calculateDistance(refLat, refLong, destLat, destLong)
-            if (distance <= radius) ans.push(record)
+            if (!record.originLatLong || !record.originLatLong.lat || !record.originLatLong.long) {
+                continue; // skip records without location
+            }
+
+            let distance = calculateDistance(
+                location.lat,
+                location.long,
+                record.originLatLong.lat,
+                record.originLatLong.long
+            );
+
+            if (distance <= radius) {
+                ans.push(record);
+            }
         }
 
-        return res.json({ message: ans, code: 200 })
+        if (ans.length === 0) {
+            return res.json({
+                message: "No matching records found within given time and radius",
+                code: 200
+            });
+        }
+
+        return res.json({ message: ans, code: 200 });
+
     } catch (err) {
-        return res.status(500).json({ message: "Error fetching records", error: err.message, code: 500 })
+        return res.status(500).json({
+            message: "Error fetching records",
+            error: err.message,
+            code: 500
+        });
     }
-}
+};
+
 
 // ========================= GEOCODER FUNCTIONS =========================
 let getIPDRLatLong = async (req, res) => {
