@@ -1,0 +1,11 @@
+server/uploads/*
+server/node_modules/*
+server/package-lock.json
+client/node_modules/*
+client/package-lock.json
+helper_scripts/trial.py
+helper_scripts/404.csv
+client/.env.local
+client/node_modules
+client/package-lock.json
+client/node_modules/*
