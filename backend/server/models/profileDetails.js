@@ -1,47 +1,22 @@
-const mongoose = require("mongoose")
-const Schema = mongoose.Schema
-const Model = mongoose.model
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+const Model = mongoose.model;
 
-const profileDetails = Schema({
-
-
-    // Phone number - 10 digit number
-    phoneNumber : {type : String, required : true, unique : true, index : true, minLength : 10, maxLength : 10},
-
-    // Other phone numbers linked to this same person
+const profileDetails = new Schema({
+    phoneNumber: { type: String, required: true, unique: true, index: true, minLength: 10, maxLength: 10 },
     associatedPhoneNumbers: [String],
-
-    // IMEI
-    imei : {type : String, required : true, maxLength : 15, minLength : 15},
-
-    // Other IMEIs linked to this same person
+    imei: { type: String, required: true, maxLength: 15, minLength: 15 },
     associatedImeis: [String],
-    
-    // IMSI
-    imsi : {type : String, required : true, maxLength : 15, minLength : 15},
-
-    // Name
-    name : {type : String, index : true}, 
-
-    // Age
-    age : {type : Number},
-
-    // Email
-    email : String,
-    
-    // Aadhar Number 
-    aadharNumber : {type : String},
-    
-    // Company
-    company : String,
-
-    // Address
-    address : String,
-
-    // Remarks
-    remarks : String
+    imsi: { type: String, required: true, maxLength: 15, minLength: 15 },
+    name: { type: String, index: true },
+    age: { type: Number },
+    email: String,
+    aadharNumber: { type: String },
+    company: String,
+    address: String,
+    remarks: String
 });
 
 module.exports = {
-    Profile : Model('profileDetails', profileDetails)
-}
+    Profile: Model("profileDetails", profileDetails)
+};

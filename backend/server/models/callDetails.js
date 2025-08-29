@@ -1,73 +1,115 @@
-const mongoose = require("mongoose")
-const Schema = mongoose.Schema
-const Model = mongoose.model
+// const mongoose = require("mongoose")
+// const Schema = mongoose.Schema
+// const Model = mongoose.model
 
-const callDataRecords = Schema({
-    // Caller number - 10 digit number
-    callerNumber : {type : String, required : true, index : true, minLength : 10, maxLength : 10},
+// const callDataRecords = Schema({
+//     // Caller number - 10 digit number
+//     callerNumber : {type : String, required : true, index : true, minLength : 10, maxLength : 10},
 
-    // Called party number - 10 digit number
-    calledNumber : {type : String, required : true, minLength : 10, maxLength : 10},
+//     // Called party number - 10 digit number
+//     calledNumber : {type : String, required : true, minLength : 10, maxLength : 10},
 
-    // Caller name - Optional
-    callerName : {type : String, index : true}, 
+//     // Caller name - Optional
+//     callerName : {type : String, index : true}, 
 
-    // Call start time
-    startTime : {type : Date, required : true, default : Date.now},
+//     // Call start time
+//     startTime : {type : Date, required : true, default : Date.now},
 
-    // Call end time
-    endTime : {type : Date, required : true, default : Date.now},
+//     // Call end time
+//     endTime : {type : Date, required : true, default : Date.now},
     
-    // Call Duration 
-    callDuration : {type : Number, required : true},
+//     // Call Duration 
+//     callDuration : {type : Number, required : true},
     
-    //Cell ID where call was initiated
-    originCellID: {type: String, required: true, index: true},
+//     //Cell ID where call was initiated
+//     originCellID: {type: String, required: true, index: true},
 
-    //Cell ID where call was dropped
-    destCellID: {type: String, required: true, index: true},
+//     //Cell ID where call was dropped
+//     destCellID: {type: String, required: true, index: true},
 
-    // Position where call was initiated
-    originLatLong : {
-        type : {
-            lat : Schema.Decimal128,
-            long : Schema.Decimal128    
-        },
+//     // Position where call was initiated
+//     originLatLong : {
+//         type : {
+//             lat : Schema.Decimal128,
+//             long : Schema.Decimal128    
+//         },
+//         required: true
+//     },
+    
+//     // Position where call was terminated
+//     destLatLong : {
+//         type : {
+//             lat : Schema.Decimal128,
+//             long : Schema.Decimal128    
+//         },
+//         required : true
+//     },
+
+//     // Call type
+//     callType : {
+//         type : String,
+//         enum : ['CALL-IN', 'CALL-OUT', 'SMS-IN', 'SMS-OUT'], 
+//         required : true
+//     },
+    
+//     // IMEI
+//     imei : {type : String, required : true, maxLength : 15, minLength : 15},
+    
+//     // IMSI
+//     imsi : {type : String, required : true, maxLength : 15, minLength : 15},
+    
+//     // Connection type
+//     connectionType : {type : String},
+    
+//     // Access type
+//     accessType : {
+//         type : String, 
+//         enum : ['2G', '3G', '4G']
+//     },
+// });
+
+// module.exports = {
+//     CDR : Model('callDataRecords', callDataRecords)
+// }
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+const Model = mongoose.model;
+
+const callDataRecords = new Schema({
+    callerNumber: { type: String, required: true, index: true, minLength: 10, maxLength: 10 },
+    calledNumber: { type: String, required: true, minLength: 10, maxLength: 10 },
+    callerName: { type: String, index: true },
+
+    startTime: { type: Date, required: true, default: Date.now },
+    endTime: { type: Date, required: true, default: Date.now },
+    callDuration: { type: Number, required: true },
+
+    originCellID: { type: String, required: true, index: true },
+    destCellID: { type: String, required: true, index: true },
+
+    originLatLong: {
+        lat: { type: mongoose.Schema.Types.Decimal128, required: true },
+        long: { type: mongoose.Schema.Types.Decimal128, required: true }
+    },
+
+    destLatLong: {
+        lat: { type: mongoose.Schema.Types.Decimal128, required: true },
+        long: { type: mongoose.Schema.Types.Decimal128, required: true }
+    },
+
+    callType: {
+        type: String,
+        enum: ["CALL-IN", "CALL-OUT", "SMS-IN", "SMS-OUT"],
         required: true
     },
-    
-    // Position where call was terminated
-    destLatLong : {
-        type : {
-            lat : Schema.Decimal128,
-            long : Schema.Decimal128    
-        },
-        required : true
-    },
 
-    // Call type
-    callType : {
-        type : String,
-        enum : ['CALL-IN', 'CALL-OUT', 'SMS-IN', 'SMS-OUT'], 
-        required : true
-    },
-    
-    // IMEI
-    imei : {type : String, required : true, maxLength : 15, minLength : 15},
-    
-    // IMSI
-    imsi : {type : String, required : true, maxLength : 15, minLength : 15},
-    
-    // Connection type
-    connectionType : {type : String},
-    
-    // Access type
-    accessType : {
-        type : String, 
-        enum : ['2G', '3G', '4G']
-    },
+    imei: { type: String, required: true, maxLength: 15, minLength: 15 },
+    imsi: { type: String, required: true, maxLength: 15, minLength: 15 },
+
+    connectionType: { type: String },
+    accessType: { type: String, enum: ["2G", "3G", "4G"] }
 });
 
 module.exports = {
-    CDR : Model('callDataRecords', callDataRecords)
-}
+    CDR: Model("callDataRecords", callDataRecords)
+};
