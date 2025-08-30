@@ -40,6 +40,6 @@ with open('ipdrData.csv','w',newline='') as file:
   fieldnames = ['privateIP', 'privatePort', 'publicIP', 'publicPort', 'destIP', 'destPort', 'phoneNumber', 'imei', 'imsi', 'startTime', 'endTime', 'originLat', 'originLong', 'uplinkVolume', 'downlinkVolume', 'totalVolume', 'accessType']
   writer = csv.DictWriter(file, fieldnames = fieldnames)
   writer.writeheader()
-  for i in range(1, 10):
+  for i in range(1, 1000):
     returnedDict = generate_data()
     writer.writerow(returnedDict)
