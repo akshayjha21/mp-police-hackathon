@@ -1,5 +1,4 @@
 const {Profile} = require("../models/profileDetails")
-const {CDR} = require("../models/callDetails")
 const {IPDR} = require("../models/ipDetails")
 const {Notes} = require("../models/noteDetails")
 // Validate profile data
