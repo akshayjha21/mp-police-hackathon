@@ -1,13 +1,15 @@
 import random
-import uuid
 from datetime import datetime, timedelta
 import json
+
 
 def random_ip():
     return ".".join(str(random.randint(0, 255)) for _ in range(4))
 
+
 def random_date(start, end):
     return start + timedelta(seconds=random.randint(0, int((end - start).total_seconds())))
+
 
 def generate_non_suspicious_ipdr(num_records=10000):
     records = []
@@ -24,7 +26,6 @@ def generate_non_suspicious_ipdr(num_records=10000):
         total_vol = uplink_vol + downlink_vol
 
         record = {
-            "_id": str(uuid.uuid4()),
             "phoneNumber": str(random.randint(9000000000, 9999999999)),
             "startTime": start_time.isoformat() + "Z",
             "endTime": end_time.isoformat() + "Z",
@@ -45,6 +46,7 @@ def generate_non_suspicious_ipdr(num_records=10000):
         records.append(record)
     return records
 
+
 # Generate 10,000 non-suspicious records
 data = generate_non_suspicious_ipdr(10000)
 
@@ -52,4 +54,4 @@ data = generate_non_suspicious_ipdr(10000)
 with open("non_suspicious_ipdr_10000.json", "w") as f:
     json.dump(data, f, indent=2)
 
-print(f"Generated {len(data)} non-suspicious IPDR records in non_suspicious_ipdr_10000.json")
+print(f"Generated {len(data)} non-suspicious IPDR records without '_id' key in non_suspicious_ipdr_10000.json")

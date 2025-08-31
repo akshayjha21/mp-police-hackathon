@@ -7,7 +7,7 @@ def generate_data():
   names = ["Sandhya", "Hrishi", "Ram", "Deeraj", "Abishake", "Kumaran"]
   companies = ["Google", "Microsoft", "Amazon", "DEShaw", "Uber"]
   address = locations[randint(0, len(locations)-1)]
-  name = names[randint(0, len(names)-1)]
+  name = names[randint(0, len(names)-1)] 
   phoneNumber = '9' + str(randint(10**(9-1), (10**9)-1))
   age = randint(20, 50)
   email = name + "@example.com"
