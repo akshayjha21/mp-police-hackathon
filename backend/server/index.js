@@ -15,6 +15,7 @@ const { rootRouter } = require("./routes/rootRouter");
 const { ipdrRouter } = require("./routes/ipdrRouter");
 const { noteRouter } = require("./routes/noteRouter");
 const { profileRouter } = require("./routes/profileRouter");
+const { updateSuspiciousFlags } = require("./utils/update_suspicious_flags.js"); // Adjust path as per your project
 
 // Models
 const { IPDR } = require("./models/ipDetails");
@@ -39,8 +40,8 @@ db.once("open", () => {
 
 // ---- Middlewares ----
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: "10mb" })); // Increased limit for JSON bodies
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" })); // Increased limit for URL-encoded bodies
 
 // ---- File Upload Config ----
 let storage = multer.diskStorage({
@@ -213,6 +214,13 @@ app.use("/note", noteRouter);
 app.use("/profile", profileRouter);
 
 // ---- Start Server ----
-app.listen(env.port, () =>
-  console.log(`🚀 Backend is running on port ${env.port}!`)
-);
+app.listen(env.port, async () => {
+  console.log(`🚀 Backend is running on port ${env.port}!`);
+
+  try {
+    await updateSuspiciousFlags();
+    console.log("✅ Suspicious flags updated on server startup");
+  } catch (err) {
+    console.error("❌ Failed to update suspicious flags on startup:", err);
+  }
+});
