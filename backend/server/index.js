@@ -15,7 +15,7 @@ const { rootRouter } = require("./routes/rootRouter");
 const { ipdrRouter } = require("./routes/ipdrRouter");
 const { noteRouter } = require("./routes/noteRouter");
 const { profileRouter } = require("./routes/profileRouter");
-const { updateSuspiciousFlags } = require("./utils/update_suspicious_flags.js"); // Adjust path as per your project
+const { updateSuspiciousFlags } = require("./utils/update_suspicious_flags.js");
 
 // Models
 const { IPDR } = require("./models/ipDetails");
@@ -34,14 +34,28 @@ mongoose.connect(
 
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "Connection error"));
-db.once("open", () => {
+
+// ---- MOVE SERVER STARTUP HERE ----
+db.once("open", async () => {
   console.log("✅ Successfully connected to the database");
+  
+  // Start server ONLY after database connection is established
+  app.listen(env.port, async () => {
+    console.log(`🚀 Backend is running on port ${env.port}!`);
+
+    try {
+      await updateSuspiciousFlags();
+      console.log("✅ Suspicious flags updated on server startup");
+    } catch (err) {
+      console.error("❌ Failed to update suspicious flags on startup:", err);
+    }
+  });
 });
 
 // ---- Middlewares ----
 app.use(cors());
-app.use(bodyParser.json({ limit: "10mb" })); // Increased limit for JSON bodies
-app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" })); // Increased limit for URL-encoded bodies
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
 // ---- File Upload Config ----
 let storage = multer.diskStorage({
@@ -53,7 +67,7 @@ let storage = multer.diskStorage({
   },
 });
 
-let upload = multer({ storage: storage }).single("file"); // 👈 expect field name "file"
+let upload = multer({ storage: storage }).single("file");
 
 // ---- Generic File Parser ----
 async function parseFile(filePath, fileExt) {
@@ -85,7 +99,7 @@ async function parseFile(filePath, fileExt) {
       try {
         const data = fs.readFileSync(filePath, "utf8");
         const lines = data.split("\n").filter((l) => l.trim().length);
-        const headers = lines[0].split(/,|\|/); // detect comma or pipe
+        const headers = lines[0].split(/,|\|/);
         results = lines.slice(1).map((line) => {
           const values = line.split(/,|\|/);
           let obj = {};
@@ -142,13 +156,13 @@ app.post("/profile/upload", (req, res) => {
         );
       }
 
-      res.status(200).send({
+      res.status(200).json({
         message: `📂 Profile file (${fileExt}) processed successfully`,
         count: records.length,
       });
     } catch (outerErr) {
       console.error("❌ Upload error:", outerErr);
-      res.status(500).send({ error: "File upload failed" });
+      res.status(500).json({ error: "File upload failed" });
     }
   });
 });
@@ -196,13 +210,13 @@ app.post("/ipdr/upload", (req, res) => {
         );
       }
 
-      res.status(200).send({
+      res.status(200).json({
         message: `📂 IPDR file (${fileExt}) processed successfully`,
         count: records.length,
       });
     } catch (outerErr) {
       console.error("❌ Upload error:", outerErr);
-      res.status(500).send({ error: "File upload failed" });
+      res.status(500).json({ error: "File upload failed" });
     }
   });
 });
@@ -213,14 +227,4 @@ app.use("/ipdr", ipdrRouter);
 app.use("/note", noteRouter);
 app.use("/profile", profileRouter);
 
-// ---- Start Server ----
-app.listen(env.port, async () => {
-  console.log(`🚀 Backend is running on port ${env.port}!`);
-
-  try {
-    await updateSuspiciousFlags();
-    console.log("✅ Suspicious flags updated on server startup");
-  } catch (err) {
-    console.error("❌ Failed to update suspicious flags on startup:", err);
-  }
-});
+// Server startup moved to db.once("open") callback above
