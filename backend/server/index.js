@@ -226,5 +226,3 @@ app.use("/", rootRouter);
 app.use("/ipdr", ipdrRouter);
 app.use("/note", noteRouter);
 app.use("/profile", profileRouter);
-
-// Server startup moved to db.once("open") callback above
