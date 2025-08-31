@@ -1,6 +1,9 @@
+const config = require('../utils/env')
 const { CustomError, calculateDistance } = require("../utils/utils")
 const { IPDR } = require("./../models/ipDetails")
 const nodeGeocoder = require('node-geocoder')
+const axios = require('axios')
+// const fetch = require('node-fetch');
 
 // ========================= GET ALL IPDR RECORDS =========================
 let getAllIPDRRecords = async (req, res) => {
@@ -160,53 +163,173 @@ let getIPDRRecords = async (req, res) => {
 
 
 // ========================= GEOCODER FUNCTIONS =========================
-let getIPDRLatLong = async (req, res) => {
-    try {
-        const location = req.body.data
-        let options = { provider: 'openstreetmap' }
-        let geoCoder = nodeGeocoder(options)
-        const result = (await geoCoder.geocode(location))[0]
+// ========================= GEOCODER FUNCTIONS =========================
 
+const getIPDRLatLong = async (req, res) => {
+    try {
+        const phoneNumber = req.body.phoneNumber;
+        
+        // Input validation for phone number
+        if (!phoneNumber || typeof phoneNumber !== "string") {
+            return res.status(400).json({
+                message: "Invalid request. 'phoneNumber' must be a valid string"
+            });
+        }
+
+        // Step 1: Find IPDR record by phone number
+        const ipdrRecord = await IPDR.findOne({ phoneNumber: phoneNumber });
+
+        if (!ipdrRecord) {
+            return res.status(404).json({
+                message: "Phone number not found in IPDR database"
+            });
+        }
+
+        // Step 2: Get publicIP and complete it if needed
+        let completeIP = ipdrRecord.publicIP;
+        
+        // Complete partial IP addresses (your IPs are missing 4th octet)
+        if (completeIP.split('.').length === 3) {
+            completeIP = completeIP + '.1';
+        }
+
+        // Step 3: Call IP2Location API using axios
+        const apiUrl = `https://api.ip2location.io/?key=${config.ip2location_api_key}&ip=${completeIP}`;
+        
+        const response = await axios.get(apiUrl, { 
+            timeout: 10000
+        });
+        
+        const result = response.data;
+
+        // Check for API-specific errors
+        if (result.error) {
+            return res.status(400).json({
+                message: "API Error: " + result.error.error_message
+            });
+        }
+
+        // Check if API returned valid coordinates
+        if (!result.latitude || !result.longitude) {
+            return res.status(404).json({
+                message: "No valid coordinates available for this phone number"
+            });
+        }
+
+        // Step 4: Return only the specified fields
         return res.json({
-            message: { latitude: result.latitude, longitude: result.longitude, country: result.country },
-            code: 200
-        })
+            latitude: parseFloat(result.latitude),
+            longitude: parseFloat(result.longitude),
+            phoneNumber: phoneNumber,
+            originalIP: ipdrRecord.publicIP,
+            completedIP: completeIP,
+            locationInfo: {
+                city: result.city_name,
+                region: result.region_name,
+                country: result.country_name
+            }
+        });
+
     } catch (err) {
-        return res.status(500).json({ message: "Error fetching lat/long", error: err.message, code: 500 })
+        console.error('Controller error:', err);
+        
+        if (err.code === 'ECONNABORTED') {
+            return res.status(500).json({
+                message: "Request timeout - IP2Location API took too long to respond"
+            });
+        } else if (err.response) {
+            return res.status(500).json({
+                message: "IP2Location API error"
+            });
+        } else if (err.request) {
+            return res.status(500).json({
+                message: "Network error - unable to reach IP2Location API"
+            });
+        } else {
+            return res.status(500).json({ 
+                message: "Error fetching lat/long"
+            });
+        }
     }
-}
+};
+
 
 let getIPDRLocationsList = async (req, res) => {
     try {
-        const location = req.body.data;
+        const phoneNumber = req.body.phoneNumber;
 
         // Input validation
-        if (!location || typeof location !== "string") {
+        if (!phoneNumber || typeof phoneNumber !== "string") {
             return res.status(400).json({
-                message: "Invalid request. 'data' must be a non-empty string",
+                message: "Invalid request. 'phoneNumber' must be a non-empty string",
                 code: 400
             });
         }
 
-        let options = { provider: 'openstreetmap' };
-        let geoCoder = nodeGeocoder(options);
-
-        const result = await geoCoder.geocode(location);
-
-        if (!result || result.length === 0) {
+        // Find IPDR record by phone number
+        const ipdrRecord = await IPDR.findOne({ phoneNumber: phoneNumber });
+        
+        if (!ipdrRecord) {
             return res.status(404).json({
-                message: "No locations found for the given input",
+                message: "No IPDR record found for the given phone number",
+                code: 404
+            });
+        }
+
+        // Get IP address from IPDR record
+        const ipAddress = ipdrRecord.publicIP;
+        
+        // Call IP2Location API
+        const apiUrl = `https://api.ip2location.io/?key=${config.ip2location_api_key}&ip=${ipAddress}`;
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            return res.status(500).json({
+                message: "Failed to fetch location data from IP2Location API",
+                code: 500
+            });
+        }
+
+        const locationData = await response.json();
+
+        // Check if API returned valid data
+        if (!locationData || locationData.response === "INVALID") {
+            return res.status(404).json({
+                message: "Invalid IP address or no location data available",
                 code: 404
             });
         }
 
         return res.json({
-            message: result.map(a => a.formattedAddress).slice(0, 5),
+            message: "Location found successfully",
+            data: {
+                phoneNumber: phoneNumber,
+                ipAddress: ipAddress,
+                location: {
+                    lat: parseFloat(locationData.latitude),
+                    lng: parseFloat(locationData.longitude),
+                    city: locationData.city_name,
+                    region: locationData.region_name,
+                    country: locationData.country_name,
+                    countryCode: locationData.country_code,
+                    zipCode: locationData.zip_code,
+                    timeZone: locationData.time_zone,
+                    isp: locationData.isp,
+                    domain: locationData.domain
+                },
+                ipdrDetails: {
+                    startTime: ipdrRecord.startTime,
+                    endTime: ipdrRecord.endTime,
+                    accessType: ipdrRecord.accessType,
+                    totalVolume: ipdrRecord.totalVolume
+                }
+            },
             code: 200
         });
+
     } catch (err) {
         return res.status(500).json({
-            message: "Error fetching location list",
+            message: "Error fetching location data",
             error: typeof err === "object" ? JSON.stringify(err) : err,
             code: 500
         });

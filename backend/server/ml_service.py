@@ -58,7 +58,7 @@ async def predict(file: UploadFile = File(None), request: Request = None):
             if filename.endswith(".csv"):
                 df = pd.read_csv(BytesIO(contents))
             elif filename.endswith(".json"):
-                df = pd.read_json(BytesIO(contents))
+             df = pd.read_json(BytesIO(contents))
             elif filename.endswith(".pdf"):
                 df = parse_pdf(contents)
             else:
