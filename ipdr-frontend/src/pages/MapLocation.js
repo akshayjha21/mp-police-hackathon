@@ -40,9 +40,9 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Dark themed tile layer
-const darkTileURL = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
-const attribution = '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>';
+// Changed to default OpenStreetMap tiles (light/white theme)
+const lightTileURL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 // Helper component to change map view
 function ChangeView({ center, zoom }) {
@@ -426,7 +426,7 @@ const MapPage = () => {
         </Box>
       )}
 
-      {/* Dark Mode Map */}
+      {/* Light Mode Map (Default) */}
       <Paper 
         sx={{ 
           p: 3, 
@@ -448,7 +448,7 @@ const MapPage = () => {
             textAlign: 'center'
           }}
         >
-          🗺️ Interactive Dark Map
+          🗺️ Interactive Map
         </Typography>
         
         <Box 
@@ -467,13 +467,12 @@ const MapPage = () => {
             style={{ 
               height: '100%', 
               width: '100%',
-              filter: 'brightness(0.9) contrast(1.2)',
             }}
             scrollWheelZoom={true}
           >
             <ChangeView center={mapCenter} zoom={mapZoom} />
             <TileLayer
-              url={darkTileURL}
+              url={lightTileURL}
               attribution={attribution}
             />
             {searchResult && (
@@ -496,39 +495,6 @@ const MapPage = () => {
           </MapContainer>
         </Box>
       </Paper>
-
-      {/* CSS for dark mode enhancements */}
-      <style jsx>{`
-        .leaflet-container {
-          background: #0a0e1a !important;
-        }
-        
-        .leaflet-tile {
-          filter: brightness(0.8) contrast(1.2) saturate(0.8);
-        }
-        
-        .leaflet-control-zoom {
-          background: ${CARD_BG} !important;
-          border: 2px solid ${ACCENT_GREEN}40 !important;
-        }
-        
-        .leaflet-control-zoom a {
-          background: ${CARD_BG} !important;
-          color: ${ACCENT_GREEN} !important;
-          border: 1px solid ${ACCENT_GREEN}30 !important;
-        }
-        
-        .leaflet-control-zoom a:hover {
-          background: ${ACCENT_GREEN}20 !important;
-          color: ${ACCENT_BLUE} !important;
-        }
-        
-        .leaflet-control-attribution {
-          background: ${CARD_BG} !important;
-          color: ${TEXT_MAIN} !important;
-          opacity: 0.8;
-        }
-      `}</style>
     </Box>
   );
 };

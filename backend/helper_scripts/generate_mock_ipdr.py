@@ -104,7 +104,7 @@ def main():
         with open(filename, mode='w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
-            for i in range(1000):
+            for i in range(100):
                 data = generate_mock_data()
                 writer.writerow(data)
             print(f"Successfully wrote 1000 rows to {filename}")

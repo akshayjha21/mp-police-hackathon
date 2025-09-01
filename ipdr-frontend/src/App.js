@@ -1,21 +1,63 @@
 import React from "react";
 import { Routes, Route, NavLink, Navigate } from "react-router-dom";
-import { Box, AppBar, Toolbar, Button, Typography } from "@mui/material";
-import { Dashboard as DashboardIcon, LocationOn, Assignment, Security, Gavel, Login as LoginIcon } from "@mui/icons-material";
+import { Box, AppBar, Toolbar, Button, Typography, Alert } from "@mui/material";
+import { Dashboard as DashboardIcon, LocationOn, Assignment, Security, Gavel } from "@mui/icons-material";
+import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, UserButton, useUser } from "@clerk/clerk-react";
 
 import Dashboard from "./pages/Dashboard";
 import Records from "./pages/Records";
 import SuspiciousActivity from "./pages/SuspiciousActivity";
 import CaseManagement from "./pages/CaseManagement";
 import MapPage from "./pages/MapLocation";
-import Login from "./pages/Login";
 
 const CARD_BG = "#181c2f";
 const DASH_BG = "#222642";
 const ACCENT_BLUE = "#24d3fe";
 const TEXT_MAIN = "#d8ebfb";
 
-export default function App() {
+// Environment Configuration Error Component
+function ConfigurationError() {
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh',
+      bgcolor: DASH_BG,
+      p: 3
+    }}>
+      <Alert 
+        severity="error" 
+        sx={{ 
+          maxWidth: 600,
+          bgcolor: CARD_BG,
+          color: TEXT_MAIN,
+          '& .MuiAlert-icon': { color: '#ff5252' }
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 1, color: '#ff5252' }}>
+          Environment Configuration Error
+        </Typography>
+        <Typography sx={{ mb: 2 }}>
+          Missing <code>VITE_CLERK_PUBLISHABLE_KEY</code> environment variable.
+        </Typography>
+        <Typography variant="body2">
+          <strong>To fix this:</strong>
+          <br />
+          1. Create a <code>.env</code> file in your project root
+          <br />
+          2. Add: <code>VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_key</code>
+          <br />
+          3. Restart your development server
+        </Typography>
+      </Alert>
+    </Box>
+  );
+}
+
+function AppContent() {
+  const { user } = useUser();
+
   return (
     <>
       <AppBar 
@@ -49,7 +91,8 @@ export default function App() {
             gap: 0.5, 
             flexWrap: 'wrap',
             justifyContent: { xs: 'center', sm: 'flex-end' },
-            width: { xs: '100%', sm: 'auto' }
+            width: { xs: '100%', sm: 'auto' },
+            alignItems: 'center'
           }}>
             <Button 
               color="inherit" 
@@ -190,34 +233,34 @@ export default function App() {
             >
               Cases
             </Button>
-            
-            <Button 
-              color="inherit" 
-              component={NavLink} 
-              to="/login"
-              size="small"
-              startIcon={<LoginIcon sx={{ fontSize: '16px !important' }} />}
-              sx={{
-                color: TEXT_MAIN,
-                fontSize: '0.75rem',
-                px: 1.5,
-                py: 0.5,
-                minWidth: 'auto',
-                '&.active': { 
-                  color: ACCENT_BLUE,
-                  bgcolor: 'rgba(36, 211, 254, 0.1)',
-                  fontWeight: 600
-                },
-                '&:hover': { 
-                  bgcolor: 'rgba(36, 211, 254, 0.2)' 
-                },
-                '& .MuiButton-startIcon': {
-                  marginRight: '4px'
-                }
+
+            {/* User Info & Profile Button */}
+            <Typography 
+              sx={{ 
+                color: TEXT_MAIN, 
+                fontSize: '0.7rem',
+                px: 1,
+                opacity: 0.8,
+                display: { xs: 'none', md: 'block' }
               }}
             >
-              Login
-            </Button>
+              Welcome, {user?.firstName || user?.emailAddresses?.[0]?.emailAddress}
+            </Typography>
+
+            {/* Clerk User Button - handles profile and logout */}
+            <Box sx={{ ml: 1 }}>
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: {
+                      width: '32px',
+                      height: '32px',
+                    }
+                  }
+                }}
+              />
+            </Box>
           </Box>
         </Toolbar>
       </AppBar>
@@ -234,7 +277,6 @@ export default function App() {
           <Route path="/map" element={<MapPage />} />
           <Route path="/suspicious-activity" element={<SuspiciousActivity />} />
           <Route path="/case-management" element={<CaseManagement />} />
-          <Route path="/login" element={<Login />} />
           <Route 
             path="*" 
             element={
@@ -260,5 +302,21 @@ export default function App() {
         </Routes>
       </Box>
     </>
+  );
+}
+
+export default function App() {
+  // ✅ Fixed syntax - single declaration with hardcoded key
+  const publishableKey = "pk_test_dmFzdC1jcmF3ZGFkLTY3LmNsZXJrLmFjY291bnRzLmRldiQ";
+
+  return (
+    <ClerkProvider publishableKey={publishableKey}>
+      <SignedIn>
+        <AppContent />
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </ClerkProvider>
   );
 }

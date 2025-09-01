@@ -28,6 +28,8 @@
     "node-fetch": "^3.3.2",
     "node-geocoder": "^4.4.1",
     "nodemon": "^3.1.10",
+    "vis-data": "^8.0.1",
+    "vis-network": "^10.0.1",
     "xlsx": "^0.18.5",
     "xslx": "^1.0.0"
   }
