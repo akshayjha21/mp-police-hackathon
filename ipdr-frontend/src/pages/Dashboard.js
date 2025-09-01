@@ -6,7 +6,9 @@ import {
   CircularProgress,
   Stack,
   Paper,
-  Divider,
+  Pagination,
+  Card,
+  CardContent,
 } from "@mui/material";
 import {
   BarChart,
@@ -26,6 +28,7 @@ import {
   getIPDRStatistics,
   getAllIPDRRecords,
   uploadIPDRFile,
+  getIPDRStatisticsLight,
 } from "../api/ipdrApi";
 
 const CARD_BG = "#181c2f";
@@ -34,34 +37,25 @@ const ACCENT_BLUE = "#24d3fe";
 const ACCENT_PURPLE = "#a334fa";
 const TEXT_MAIN = "#d8ebfb";
 const BAR_COLORS = [
-  "#24d3fe",
-  "#a334fa",
-  "#f38ba8",
-  "#fab387",
-  "#a6e3a1",
-  "#89b4fa",
-  "#f0c800",
-  "#cba6f7",
-  "#74c7ec",
-  "#cdd6f4",
+  "#24d3fe", "#a334fa", "#f38ba8", "#fab387", "#a6e3a1",
+  "#89b4fa", "#f0c800", "#cba6f7", "#74c7ec", "#cdd6f4",
 ];
 const PIE_COLORS = [
-  "#24d3fe",
-  "#a334fa",
-  "#f0c800",
-  "#a6e3a1",
-  "#89b4fa",
-  "#fab387",
-  "#f38ba8",
-  "#cdd6f4",
+  "#24d3fe", "#a334fa", "#f0c800", "#a6e3a1",
+  "#89b4fa", "#fab387", "#f38ba8", "#cdd6f4",
 ];
 
-// Customize possible accessTypes for vertical legend
 const ACCESS_TYPES_LEGEND = ["2G", "3G", "4G", "5G"];
 
 export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage] = useState(20);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [records, setRecords] = useState([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
@@ -69,7 +63,6 @@ export default function Dashboard() {
   const [ipdrStats, setIpdrStats] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  const [totalRecords, setTotalRecords] = useState(0);
   const [uniqueUsers, setUniqueUsers] = useState(0);
   const [suspiciousPatterns, setSuspiciousPatterns] = useState(0);
 
@@ -80,71 +73,44 @@ export default function Dashboard() {
 
   const ITEMS_PER_PAGE = 5;
   const [barPage, setBarPage] = React.useState(0);
-  const maxBarPage = Math.max(
-    0,
-    Math.ceil(maxCallDurations.length / ITEMS_PER_PAGE) - 1
-  );
+  const maxBarPage = Math.max(0, Math.ceil(maxCallDurations.length / ITEMS_PER_PAGE) - 1);
   const curBarData = maxCallDurations.slice(
     barPage * ITEMS_PER_PAGE,
     (barPage + 1) * ITEMS_PER_PAGE
   );
-  const remainingLeft =
-    maxCallDurations.length - (barPage + 1) * ITEMS_PER_PAGE;
+  const remainingLeft = maxCallDurations.length - (barPage + 1) * ITEMS_PER_PAGE;
 
   useEffect(() => {
     fetchStats();
-    fetchRecords();
-    // eslint-disable-next-line
+    fetchRecords(1);
   }, []);
 
+  // Fast loading statistics
   async function fetchStats() {
     setLoadingStats(true);
     try {
-      const res = await getIPDRStatistics();
+      const res = await getIPDRStatisticsLight();
       if (res && res.ipdrCounts) {
         setIpdrStats(
           res.ipdrCounts.map((c, i) => ({
             month: [
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
+              "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
             ][i],
             records: c,
           }))
         );
-  
-        setTotalRecords(
-          res.totalRecords || res.ipdrCounts.reduce((a, b) => a + b, 0)
-        );
+
+        setTotalRecords(res.totalRecords || res.ipdrCounts.reduce((a, b) => a + b, 0));
         setUniqueUsers(res.uniqueUsers || 50);
         setSuspiciousPatterns(res.suspiciousPatterns || 64);
-  
-        // Set criminalRecordsWave from suspiciousCounts if it exists, else fallback to ipdrCounts
+
         if (res.suspiciousCounts) {
           setCriminalRecordsWave(
             res.suspiciousCounts.map((count, index) => ({
               month: [
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec",
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
               ][index],
               records: count,
             }))
@@ -153,38 +119,33 @@ export default function Dashboard() {
           setCriminalRecordsWave(
             res.ipdrCounts.map((count, index) => ({
               month: [
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec",
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
               ][index],
               records: count,
             }))
           );
         }
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error('Error fetching stats:', error);
     }
     setLoadingStats(false);
   }
-  
 
-  async function fetchRecords() {
+  // Paginated records loading
+  async function fetchRecords(page = 1) {
     setLoadingRecords(true);
     try {
-      const res = await getAllIPDRRecords();
-      setRecords(res || []);
-      const counts = (res || []).reduce((acc, cur) => {
-        acc[cur.accessType] = (acc[cur.accessType] || 0) + 1;
+      const result = await getAllIPDRRecords(page, recordsPerPage);
+      setRecords(result.data || []);
+      setTotalRecords(result.totalCount);
+      setTotalPages(result.totalPages);
+
+      const counts = (result.data || []).reduce((acc, cur) => {
+        if (cur.accessType) {
+          acc[cur.accessType] = (acc[cur.accessType] || 0) + 1;
+        }
         return acc;
       }, {});
       setAppUsageData(
@@ -192,40 +153,45 @@ export default function Dashboard() {
       );
 
       const maxDurationMap = {};
-      (res || []).forEach((rec) => {
+      (result.data || []).forEach((rec) => {
         if (rec.startTime && rec.endTime && rec.phoneNumber) {
-          const duration =
-            (new Date(rec.endTime) - new Date(rec.startTime)) / 60000;
-          if (
-            !maxDurationMap[rec.phoneNumber] ||
-            maxDurationMap[rec.phoneNumber] < duration
-          ) {
+          const duration = (new Date(rec.endTime) - new Date(rec.startTime)) / 60000;
+          if (!maxDurationMap[rec.phoneNumber] || maxDurationMap[rec.phoneNumber] < duration) {
             maxDurationMap[rec.phoneNumber] = duration;
           }
         }
       });
+
       const maxDurationArr = Object.entries(maxDurationMap)
-        .map(([phone, duration]) => ({
-          phone,
-          duration: Math.round(duration),
-        }))
+        .map(([phone, duration]) => ({ phone, duration: Math.round(duration) }))
         .sort((a, b) => b.duration - a.duration);
       setMaxCallDurations(maxDurationArr);
-    } catch {
-      // ignore
+
+    } catch (error) {
+      console.error('Error fetching records:', error);
     }
     setLoadingRecords(false);
   }
+
+  // Handle pagination
+  const handlePageChange = (event, newPage) => {
+    setCurrentPage(newPage);
+    fetchRecords(newPage);
+    setBarPage(0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   async function handleFileUpload() {
     if (!uploadFile) return;
     setUploading(true);
     try {
       await uploadIPDRFile(uploadFile);
-      // Slight delay before reload for smooth UX
       setTimeout(() => {
-        window.location.reload();
-      }, 300);
+        fetchStats();
+        fetchRecords(1);
+        setCurrentPage(1);
+      }, 500);
+      setUploadFile(null);
     } catch (e) {
       console.error("Upload failed", e);
     }
@@ -234,10 +200,79 @@ export default function Dashboard() {
 
   return (
     <Box sx={{ bgcolor: DASH_BG, minHeight: "100vh", p: 3 }}>
+      
+      {/* Hero Stats Section - Total IPDR Records prominently displayed */}
+      <Paper
+        sx={{
+          mb: 4,
+          p: 4,
+          bgcolor: CARD_BG,
+          borderRadius: 3,
+          background: `linear-gradient(135deg, ${CARD_BG} 0%, #1a1f35 100%)`,
+          border: `2px solid ${ACCENT_BLUE}30`,
+          boxShadow: `0 8px 32px ${ACCENT_BLUE}20`,
+        }}
+        elevation={12}
+      >
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="center">
+          {/* Main Total Records Display */}
+          <Box sx={{ textAlign: { xs: 'center', md: 'left' }, flex: 1 }}>
+            <Typography variant="h6" sx={{ color: ACCENT_BLUE, mb: 1, fontWeight: 600 }}>
+              📊 Total IPDR Records
+            </Typography>
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                color: ACCENT_BLUE, 
+                fontWeight: 'bold',
+                textShadow: `0 0 20px ${ACCENT_BLUE}`,
+                mb: 1
+              }}
+            >
+              {loadingStats ? <CircularProgress size={40} /> : totalRecords.toLocaleString()}
+            </Typography>
+            <Typography sx={{ color: TEXT_MAIN, opacity: 0.8 }}>
+              Total telecommunications data records processed
+            </Typography>
+          </Box>
+
+          {/* Secondary Stats */}
+          <Stack direction="row" spacing={3}>
+            <Card sx={{ bgcolor: DASH_BG, minWidth: 120 }}>
+              <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                <Typography sx={{ color: ACCENT_PURPLE, fontWeight: 600, fontSize: 14 }}>
+                  Page
+                </Typography>
+                <Typography variant="h5" sx={{ color: TEXT_MAIN, fontWeight: 'bold' }}>
+                  {currentPage}
+                </Typography>
+                <Typography sx={{ color: TEXT_MAIN, opacity: 0.7, fontSize: 12 }}>
+                  of {totalPages}
+                </Typography>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ bgcolor: DASH_BG, minWidth: 120 }}>
+              <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                <Typography sx={{ color: ACCENT_PURPLE, fontWeight: 600, fontSize: 14 }}>
+                  Loaded
+                </Typography>
+                <Typography variant="h5" sx={{ color: TEXT_MAIN, fontWeight: 'bold' }}>
+                  {loadingRecords ? <CircularProgress size={20} /> : records.length}
+                </Typography>
+                <Typography sx={{ color: TEXT_MAIN, opacity: 0.7, fontSize: 12 }}>
+                  records
+                </Typography>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Stack>
+      </Paper>
+
       {/* Upload Section */}
       <Paper
         sx={{
-          mb: 3,
+          mb: 4,
           p: 3,
           bgcolor: CARD_BG,
           display: "flex",
@@ -249,7 +284,7 @@ export default function Dashboard() {
         elevation={8}
       >
         <Typography variant="h6" sx={{ color: ACCENT_BLUE, flexGrow: 1 }}>
-          Upload IPDR File
+          📁 Upload IPDR File
         </Typography>
         <Button
           variant="contained"
@@ -284,78 +319,18 @@ export default function Dashboard() {
         </Button>
       </Paper>
 
-      {/* Records Info Section */}
-      <Stack
-        direction="row"
-        spacing={3}
-        sx={{
-          mb: 4,
-          justifyContent: "center",
-          textAlign: "center",
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            bgcolor: CARD_BG,
-            p: 2,
-            borderRadius: 3,
-            minWidth: 150,
-          }}
-        >
-          <Typography sx={{ color: ACCENT_BLUE, fontWeight: 700 }}>
-            Total Records
-          </Typography>
-          <Typography sx={{ color: TEXT_MAIN, fontSize: 24 }}>
-            {loadingStats ? <CircularProgress size={24} /> : totalRecords}
-          </Typography>
-        </Paper>
-        <Paper
-          elevation={6}
-          sx={{
-            bgcolor: CARD_BG,
-            p: 2,
-            borderRadius: 3,
-            minWidth: 150,
-          }}
-        >
-          <Typography sx={{ color: ACCENT_BLUE, fontWeight: 700 }}>
-            Unique Users
-          </Typography>
-          <Typography sx={{ color: TEXT_MAIN, fontSize: 24 }}>
-            {loadingStats ? <CircularProgress size={24} /> : uniqueUsers}
-          </Typography>
-        </Paper>
-        <Paper
-          elevation={6}
-          sx={{
-            bgcolor: CARD_BG,
-            p: 2,
-            borderRadius: 3,
-            minWidth: 150,
-          }}
-        >
-          <Typography sx={{ color: ACCENT_BLUE, fontWeight: 700 }}>
-            Suspicious Patterns
-          </Typography>
-          <Typography sx={{ color: TEXT_MAIN, fontSize: 24 }}>
-            {loadingStats ? <CircularProgress size={24} /> : suspiciousPatterns}
-          </Typography>
-        </Paper>
-      </Stack>
-
-      {/* Waveform Total IPDR Logs */}
-      <Box
-        sx={{ mb: 4, p: 3, bgcolor: CARD_BG, borderRadius: 2, height: 220 }}
-      >
+      {/* Monthly Overview Chart */}
+      <Box sx={{ mb: 4, p: 3, bgcolor: CARD_BG, borderRadius: 2, height: 220 }}>
         <Typography
           variant="h6"
           sx={{ color: ACCENT_BLUE, fontWeight: 700, mb: 1 }}
         >
-           IPDR Records
+          📈 IPDR Records Overview
         </Typography>
         {loadingStats ? (
-          <CircularProgress />
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80%' }}>
+            <CircularProgress sx={{ color: ACCENT_BLUE }} />
+          </Box>
         ) : (
           <ResponsiveContainer width="100%" height="90%">
             <LineChart data={ipdrStats}>
@@ -382,13 +357,13 @@ export default function Dashboard() {
         )}
       </Box>
 
-      {/* Pie & Bar side by side */}
+      {/* Pie & Bar Charts Side by Side */}
       <Stack
         direction={{ xs: "column", md: "row" }}
         spacing={3}
         sx={{ mb: 4 }}
       >
-        {/* Pie with vertical legend */}
+        {/* Pie Chart */}
         <Box
           flex={1}
           sx={{
@@ -406,11 +381,13 @@ export default function Dashboard() {
               variant="subtitle1"
               sx={{ color: TEXT_MAIN, mb: 2, fontWeight: 600 }}
             >
-              Applications Used
+              📱 Applications Used (Current Page)
             </Typography>
             {loadingRecords ? (
-              <CircularProgress />
-            ) : (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                <CircularProgress sx={{ color: ACCENT_BLUE }} />
+              </Box>
+            ) : appUsageData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -431,9 +408,14 @@ export default function Dashboard() {
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
+            ) : (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                <Typography sx={{ color: TEXT_MAIN }}>No data available</Typography>
+              </Box>
             )}
           </Box>
-          {/* Vertical legend box */}
+          
+          {/* Legend */}
           <Box
             sx={{
               ml: 2,
@@ -445,7 +427,6 @@ export default function Dashboard() {
             }}
           >
             {ACCESS_TYPES_LEGEND.map((type, idx) => {
-              // Find matching segment for this type in appUsageData (case-insensitive)
               const foundIndex = appUsageData.findIndex(
                 (seg) => seg.name.toLowerCase() === type.toLowerCase()
               );
@@ -469,7 +450,7 @@ export default function Dashboard() {
           </Box>
         </Box>
 
-        {/* Bar chart (5 bars per page) */}
+        {/* Bar Chart */}
         <Box
           flex={1}
           sx={{
@@ -485,11 +466,13 @@ export default function Dashboard() {
             variant="subtitle1"
             sx={{ color: TEXT_MAIN, mb: 2, fontWeight: 600 }}
           >
-            Maximum Call Durations
+            ⏱️ Maximum Call Durations (Current Page)
           </Typography>
           {loadingRecords ? (
-            <CircularProgress />
-          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80%' }}>
+              <CircularProgress sx={{ color: ACCENT_BLUE }} />
+            </Box>
+          ) : maxCallDurations.length > 0 ? (
             <>
               <Box sx={{ flex: 1 }}>
                 <ResponsiveContainer width="100%" height="85%">
@@ -498,12 +481,12 @@ export default function Dashboard() {
                     <XAxis
                       dataKey="phone"
                       stroke={TEXT_MAIN}
-                      fontSize={14}
+                      fontSize={12}
                       angle={-30}
                       height={60}
                       tick={{ fill: TEXT_MAIN }}
                     />
-                    <YAxis stroke={TEXT_MAIN} fontSize={14} tick={{ fill: TEXT_MAIN }} />
+                    <YAxis stroke={TEXT_MAIN} fontSize={12} tick={{ fill: TEXT_MAIN }} />
                     <Tooltip
                       contentStyle={{
                         background: CARD_BG,
@@ -528,7 +511,7 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               </Box>
 
-              {/* Buttons with numbers left */}
+              {/* Bar Chart Navigation */}
               <Box
                 sx={{
                   mt: 2,
@@ -546,7 +529,7 @@ export default function Dashboard() {
                 >
                   Previous 5
                 </Button>
-                <Typography sx={{ color: TEXT_MAIN }}>
+                <Typography sx={{ color: TEXT_MAIN, fontSize: 12 }}>
                   {remainingLeft > 0
                     ? `${remainingLeft} more phone number${remainingLeft > 1 ? "s" : ""} left`
                     : "No more phone numbers"}
@@ -562,11 +545,15 @@ export default function Dashboard() {
                 </Button>
               </Box>
             </>
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80%' }}>
+              <Typography sx={{ color: TEXT_MAIN }}>No call duration data available</Typography>
+            </Box>
           )}
         </Box>
       </Stack>
 
-      {/* Criminal Records Waveform with buttons inside */}
+      {/* Criminal Records Chart */}
       <Box
         sx={{
           mb: 4,
@@ -583,10 +570,12 @@ export default function Dashboard() {
           variant="h6"
           sx={{ color: ACCENT_PURPLE, fontWeight: 700, mb: 1 }}
         >
-          People With Criminal History
+          ⚠️ People With Criminal History
         </Typography>
         {loadingStats ? (
-          <CircularProgress />
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80%' }}>
+            <CircularProgress sx={{ color: ACCENT_PURPLE }} />
+          </Box>
         ) : (
           <Box sx={{ flex: 1 }}>
             <ResponsiveContainer width="100%" height="95%">
@@ -614,6 +603,48 @@ export default function Dashboard() {
           </Box>
         )}
       </Box>
+
+      {/* Pagination Controls at Bottom */}
+      <Paper
+        sx={{
+          p: 3,
+          bgcolor: CARD_BG,
+          borderRadius: 3,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 2,
+        }}
+        elevation={8}
+      >
+        <Typography sx={{ color: TEXT_MAIN, fontWeight: 600 }}>
+          📄 Showing {((currentPage - 1) * recordsPerPage) + 1}-{Math.min(currentPage * recordsPerPage, totalRecords)} of {totalRecords.toLocaleString()} records
+        </Typography>
+        
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={handlePageChange}
+          color="primary"
+          size="large"
+          showFirstButton
+          showLastButton
+          sx={{
+            '& .MuiPaginationItem-root': {
+              color: TEXT_MAIN,
+              '&.Mui-selected': {
+                bgcolor: ACCENT_BLUE,
+                color: '#000',
+                fontWeight: 600,
+              },
+              '&:hover': {
+                bgcolor: 'rgba(36, 211, 254, 0.2)',
+              },
+            },
+          }}
+        />
+      </Paper>
     </Box>
   );
 }
