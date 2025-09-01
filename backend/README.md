@@ -1,58 +1,156 @@
-## Inspiration
+README File
+IPDR Communication Analysis and Mapping Tool
+A smart tool to extract and identify B-party (recipient) public IPs and mobile numbers from IPDR logs, enabling accurate mapping of A-party to B-party interactions for law enforcement investigations.
 
-This project was built during the finals of Smart India Hackathon 2020 for the Bureau of Police Research and Development  (BPRD). The problems this project aims to overcome are described in the the problem statement Rk_312 for BPRD. 
+📖 Table of Contents
+About
 
-## About
+Features
 
-Call Data Records (CDR) and Internet Protocol Detail Records (IPDR) related to cyber offenders are very important for Law Enforcement Agencies (LEAs). CDR and IPDR data available presently is generally found in a Spreadsheet, Excel or CSV file format. It is a tedious process to draw conclusions from raw CDR and IPDR data. Hence, this project aims to provide a graphical visualization of this data to more intutively and efficiently interpret this data. Our solution takes different files as inputs in the formats like .XLSX, .CSV, TXT. and it converts them into graphs connecting users (phone numbers) via their calls and ip data exchanged. 
+Technologies
 
-## Features
+Getting Started
 
-- [X] Functionality to populate DBs upload CDR, IPDR files in CSV format.  
-- [X] Provides an interactive map with location and time filters to visualize cdr records.
-- [X] Constructs a heatmap of all the locations visited by a node (phone number) over a time range
-- [X] Profile dashboard to show all relevant insights and information about a specific node (phone number) 
-- [X] Provides a graph visualization of nodes depicting outgoing / incoming calls & SMS as edges thus forming a network of associated nodes.
-- [X] Depicts visually the strength of the relationships between nodes utilizing a weighted sum of total call durations, number of calls and number of SMSes as a gradient from green (weakly related) to red(strongly related).
-- [X] Identifies phone numbers which possess the same imei and vice versa denoted by a yellow edge.   
-- [X] Allows for addition of notes for edges and nodes in the graph for future reference
-- [X] Allows for querying profiles using name, email, imei, imsi and aadhar and phone numbers.  
-- [ ] Generating a PDF report of visualized graphs, maps and notes.
-- [ ] Toggle between graph and map mode using the same set of nodes
-- [ ] Extracting data from various CDR and IPDR files with different formats
+Usage
 
+Folder Structure
 
-## Screenshots
+Team
 
-![image Dashboard](./screenshots/dashboard.png)
-![image Map](./screenshots/map.png)
-![image Heatmap](./screenshots/heatmap.png)
-<img src="./screenshots/graph.png" width="845px">
+License
 
+🎯 About
+This project addresses the critical need for a streamlined, intelligent system to analyze large volumes of Internet Protocol Detail Records (IPDR). By leveraging machine learning and data visualization, our tool efficiently parses raw IPDR logs to identify and map communication patterns between A-party (initiator) and B-party (recipient) users. This is a powerful resource for law enforcement, telecom security teams, and investigators, providing clear, actionable insights into digital communication networks and suspicious activities.
 
-## Requirements
+✨ Features
+Advanced Log Parsing Engine: Efficiently processes large and complex IPDR files in various formats (CSV, TXT, JSON, etc.) from different telecom operators.
 
-1) nodejs >= 14.5
-2) mongodb
+Accurate A-Party to B-Party Mapping: Precisely extracts and maps initiator (A-party) and recipient (B-party) public IPs and mobile numbers.
 
-## Setup Instructions
+Intelligent Data Filtering: Automatically filters out irrelevant records, focusing on key communication sessions for a more targeted investigation.
 
-1) In both client and server folders, run
-```
+Interactive Communication Graphs: Visualizes network connections and call relationships using interactive charts powered by Recharts.
+
+Suspicious Activity Detection: Employs a Random Forest machine learning model to automatically flag unusual communication behaviors (e.g., frequent late-night calls, short-duration calls).
+
+Comprehensive Search and Query System: Allows users to search for specific numbers, IP addresses, date ranges, and communication types with ease.
+
+User-Friendly Dashboard: A clean and intuitive React-based interface for visualizing extracted data, communication relationships, and potential red flags.
+
+Integrated Mapping: Uses a Map API to provide geographical context to IP addresses, aiding in location-based analysis.
+
+Secure Authentication: Built with Clerk for robust and secure user authentication and access control.
+
+💻 Technologies
+Frontend: React.js
+
+Backend: Node.js (or Python/Flask based on your choice)
+
+Database: MongoDB
+
+Authentication: Clerk
+
+Charts: Recharts
+
+Machine Learning: Scikit-learn (or similar library) for the Random Forest model
+
+Mapping: [Name of your Map API, e.g., Google Maps API, Mapbox]
+
+🚀 Getting Started
+Prerequisites
+Node.js (version 14 or higher)
+
+MongoDB
+
+Git
+
+Installation
+Clone the repository:
+
+Bash
+
+git clone https://github.com/yourusername/IPDR-communication-tool.git
+cd IPDR-communication-tool
+Install backend dependencies:
+
+Bash
+
+cd server
 npm install
-```
+Install frontend dependencies:
 
-2) Replace your mapbox api key in *.env.local* after executing the following command 
+Bash
 
-```
-cp .env.example .env.local
-```
+cd ../client
+npm install
+Configuration
+Create a .env file in the server directory and add the following environment variables:
 
-## Starting application
+MONGODB_URI=<your_mongodb_connection_string>
+CLERK_SECRET_KEY=<your_clerk_secret_key>
+MAP_API_KEY=<your_map_api_key>
+Running the Application
+Start the backend server:
 
-Start client and server by using the command
+Bash
 
-```
+cd server
 npm start
-```
+Start the frontend development server:
 
+Bash
+
+cd ../client
+npm start
+The application will be accessible at http://localhost:3000.
+
+🛠️ Usage
+Login: Access the dashboard using secure authentication powered by Clerk.
+
+Upload Logs: Navigate to the upload section to submit IPDR log files (CSV, TXT, JSON).
+
+Analyze Data: The system will automatically parse the logs, extract relevant data, and identify communication patterns.
+
+View Dashboard: Explore the dashboard to see an overview of the data, including:
+
+Extracted A-party and B-party numbers/IPs.
+
+Interactive network graphs of communication.
+
+A list of flagged suspicious activities.
+
+Geographic mapping of IP addresses.
+
+Query and Filter: Use the search bar and filters to narrow down your investigation by specific numbers, IPs, or date ranges.
+
+📁 Folder Structure
+IPDR-communication-tool/
+├── client/                     # Frontend (React)
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── components/         # Reusable UI components (e.g., tables, charts)
+│   │   ├── pages/              # Main application pages (e.g., Dashboard, Upload, Login)
+│   │   ├── services/           # API communication layer
+│   │   ├── context/            # Global state management
+│   │   ├── App.js
+│   │   ├── index.js
+│   │   └── styles.css
+│   └── package.json
+│
+├── server/                     # Backend (Node.js/Express)
+│   ├── src/
+│   │   ├── controllers/        # Handle API requests and logic
+│   │   ├── models/             # Mongoose schemas for MongoDB
+│   │   ├── routes/             # API endpoints
+│   │   ├── services/           # Business logic, ML models, log parsing
+│   │   │   ├── logParser.js
+│   │   │   └── mlModel.js
+│   │   ├── config/             # Environment variables and other configurations
+│   │   └── app.js              # Main server file
+│   └── package.json
+│
+├── .gitignore
+├── .env.example
+└── README.md
+🤝 Team
