@@ -25,7 +25,7 @@ const app = express();
 
 // ---- Database Connection ----
 mongoose.connect(
-  "mongodb+srv://akshay21:akshay21@cluster0.avhdjnv.mongodb.net/",
+ 
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
