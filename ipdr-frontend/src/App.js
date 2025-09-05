@@ -306,8 +306,7 @@ function AppContent() {
 }
 
 export default function App() {
-  // ✅ Fixed syntax - single declaration with hardcoded key
-  const publishableKey = "pk_test_dmFzdC1jcmF3ZGFkLTY3LmNsZXJrLmFjY291bnRzLmRldiQ";
+ 
 
   return (
     <ClerkProvider publishableKey={publishableKey}>
