@@ -1,4 +1,4 @@
-# Mp-Police-Hackathon
+# IPDR Communication Analysis and Mapping Tool
 
 IPDR Communication Analysis and Mapping Tool
 A smart tool to extract and identify B-party (recipient) public IPs and mobile numbers from IPDR logs, enabling accurate mapping of A-party to B-party interactions for law enforcement investigations.
